@@ -341,3 +341,27 @@ body {
   width: 90px;   /* más visible */
   height: auto;
 }
+.header h1 {
+  font-weight: 800; /* negrita fuerte */
+}
+.store h2 {
+  font-weight: 700; /* negrita */
+}
+.stock-texto {
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.stock-ultima {
+  color: #c0392b;
+  font-weight: 700;
+}
+
+.stock-ultimas {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.stock-normal {
+  color: #2d3436;
+}

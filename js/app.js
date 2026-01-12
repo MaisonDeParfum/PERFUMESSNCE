@@ -11,6 +11,19 @@ const inputBusqueda = document.getElementById("busqueda");
 let productos = [];
 let productosFiltrados = [];
 
+/************** TEXTO DE STOCK (PÚBLICO) **************/
+function textoStock(stock) {
+  if (stock === 1) {
+    return `<span class="stock-ultima">¡Última unidad!</span>`;
+  }
+
+  if (stock > 1 && stock <= 4) {
+    return `<span class="stock-ultimas">Últimas unidades</span>`;
+  }
+
+  return `<span class="stock-normal">En stock</span>`;
+}
+
 /************** CARGAR FIREBASE **************/
 async function cargarProductos() {
   productos = [];
@@ -20,11 +33,14 @@ async function cargarProductos() {
     productos.push(docSnap.data());
   });
 
-  productosFiltrados = productos.filter(p => p.activo && p.stock > 0);
+  productosFiltrados = productos.filter(
+    p => p.activo && p.stock > 0
+  );
+
   renderCatalogo(productosFiltrados);
 }
 
-/************** RENDER **************/
+/************** RENDER CATÁLOGO **************/
 function renderCatalogo(lista) {
   catalogo.innerHTML = "";
 
@@ -41,6 +57,9 @@ function renderCatalogo(lista) {
           <h4>${p.nombre}</h4>
           <p>${p.marca}</p>
           <strong>S/ ${p.precio}</strong>
+          <div class="stock-texto">
+            ${textoStock(p.stock)}
+          </div>
         </div>
       </div>
     `;
@@ -62,6 +81,7 @@ window.filtrarPerfumes = function () {
 
   const precioMin = document.getElementById("precioMin")?.value;
   const precioMax = document.getElementById("precioMax")?.value;
+
   const mlMin = document.getElementById("mlMin")?.value;
   const mlMax = document.getElementById("mlMax")?.value;
 
@@ -79,9 +99,9 @@ window.filtrarPerfumes = function () {
 
     const cumpleUso =
       usosSeleccionados.length === 0 ||
-  usosSeleccionados.some(u =>
-    p.uso.toLowerCase().includes(u.toLowerCase())
-  );
+      usosSeleccionados.some(u =>
+        p.uso?.toLowerCase().includes(u.toLowerCase())
+      );
 
     const cumplePrecio =
       (!precioMin || p.precio >= precioMin) &&
@@ -103,7 +123,7 @@ window.filtrarPerfumes = function () {
   renderCatalogo(productosFiltrados);
 };
 
-/************** MODAL **************/
+/************** MODAL DETALLE **************/
 window.verPerfume = function (p) {
 
   const modal = document.createElement("div");
@@ -127,7 +147,10 @@ window.verPerfume = function (p) {
         <div class="modal-right">
           <p><strong>Precio:</strong> S/ ${p.precio}</p>
           <p><strong>Presentación:</strong> ${p.presentacion} ml</p>
-          <p><strong>Stock:</strong> ${p.stock}</p>
+
+          <div class="stock-texto">
+            ${textoStock(p.stock)}
+          </div>
 
           <h4>Descripción</h4>
           <p>${p.descripcion || "-"}</p>
