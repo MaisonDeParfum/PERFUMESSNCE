@@ -79,7 +79,9 @@ window.filtrarPerfumes = function () {
 
     const cumpleUso =
       usosSeleccionados.length === 0 ||
-      usosSeleccionados.includes(p.uso);
+  usosSeleccionados.some(u =>
+    p.uso.toLowerCase().includes(u.toLowerCase())
+  );
 
     const cumplePrecio =
       (!precioMin || p.precio >= precioMin) &&

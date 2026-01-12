@@ -1,5 +1,6 @@
 /**************** FIREBASE ****************/
-import { db } from "./firebase.js";
+import { db, auth } from "./firebase.js";
+
 import {
   collection,
   addDoc,
@@ -9,17 +10,22 @@ import {
   doc
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-/**************** CONFIG ****************/
-const PASS = "j3r3my*2026";
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 
 /**************** ELEMENTOS ****************/
 const loginDiv = document.getElementById("login");
 const panelDiv = document.getElementById("panel");
-const passwordInput = document.getElementById("adminPassword");
 const tabla = document.getElementById("tablaProductos");
 const modal = document.getElementById("modalPerfume");
 
 /**************** INPUTS ****************/
+const emailInput = document.getElementById("adminEmail");
+const passwordInput = document.getElementById("adminPassword");
+
 const p_nombre = document.getElementById("p_nombre");
 const p_marca = document.getElementById("p_marca");
 const p_tipo = document.getElementById("p_tipo");
@@ -41,41 +47,53 @@ const p_activo = document.getElementById("p_activo");
 let editId = null;
 
 /**************** LOGIN ****************/
-function login() {
-  if (passwordInput.value === PASS) {
+window.login = async function () {
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      emailInput.value,
+      passwordInput.value
+    );
+  } catch (e) {
+    alert("❌ Correo o contraseña incorrectos");
+  }
+};
+
+/**************** SESIÓN ****************/
+onAuthStateChanged(auth, user => {
+  if (user) {
     loginDiv.style.display = "none";
     panelDiv.style.display = "block";
     cargarProductos();
   } else {
-    alert("❌ Contraseña incorrecta");
+    panelDiv.style.display = "none";
+    loginDiv.style.display = "block";
   }
-}
+});
 
 /**************** LOGOUT ****************/
-function logout() {
-  passwordInput.value = "";
-  panelDiv.style.display = "none";
-  loginDiv.style.display = "block";
+window.logout = async function () {
+  await signOut(auth);
   window.location.href = "index.html";
-}
+};
 
 /**************** MODAL ****************/
-function abrirModal() {
+window.abrirModal = function () {
   modal.style.display = "flex";
-}
+};
 
-function cerrarModal() {
+window.cerrarModal = function () {
   modal.style.display = "none";
   limpiarModal();
   editId = null;
   document.querySelector(".modal-footer .btn-primary").innerText = "Crear Perfume";
-}
+};
 
 /**************** CREAR / EDITAR ****************/
-async function crearPerfume() {
+window.crearPerfume = async function () {
 
   if (!p_nombre.value || !p_marca.value || !p_precio.value) {
-    alert("⚠️ Completa los campos obligatorios");
+    alert("Completa los campos obligatorios");
     return;
   }
 
@@ -106,15 +124,15 @@ async function crearPerfume() {
 
   cerrarModal();
   cargarProductos();
-}
+};
 
 /**************** EDITAR ****************/
-async function editarPerfume(id) {
-  const snap = await getDocs(collection(db, "productos"));
+window.editarPerfume = async function (id) {
+  const snapshot = await getDocs(collection(db, "productos"));
 
-  snap.forEach(docSnap => {
-    if (docSnap.id === id) {
-      const p = docSnap.data();
+  snapshot.forEach(d => {
+    if (d.id === id) {
+      const p = d.data();
       editId = id;
 
       p_nombre.value = p.nombre;
@@ -138,23 +156,23 @@ async function editarPerfume(id) {
       abrirModal();
     }
   });
-}
+};
 
 /**************** ELIMINAR ****************/
-async function eliminarFirebase(id) {
+window.eliminarFirebase = async function (id) {
   if (confirm("¿Eliminar producto?")) {
     await deleteDoc(doc(db, "productos", id));
     cargarProductos();
   }
-}
+};
 
-/**************** CARGAR TABLA ****************/
+/**************** TABLA ****************/
 async function cargarProductos() {
   tabla.innerHTML = "";
   const snapshot = await getDocs(collection(db, "productos"));
 
-  snapshot.forEach(docSnap => {
-    const p = docSnap.data();
+  snapshot.forEach(d => {
+    const p = d.data();
 
     tabla.innerHTML += `
       <tr>
@@ -164,15 +182,15 @@ async function cargarProductos() {
         <td>${p.stock}</td>
         <td>${p.activo ? "✅ Activo" : "❌ Inactivo"}</td>
         <td>
-          <button onclick="editarPerfume('${docSnap.id}')">✏️</button>
-          <button onclick="eliminarFirebase('${docSnap.id}')">🗑️</button>
+          <button onclick="editarPerfume('${d.id}')">✏️</button>
+          <button onclick="eliminarFirebase('${d.id}')">🗑️</button>
         </td>
       </tr>
     `;
   });
 }
 
-/**************** LIMPIAR MODAL ****************/
+/**************** LIMPIAR ****************/
 function limpiarModal() {
   p_nombre.value = "";
   p_marca.value = "";
@@ -190,12 +208,3 @@ function limpiarModal() {
   p_familia.value = "Oriental";
   p_activo.checked = true;
 }
-
-/**************** EXPORT GLOBAL ****************/
-window.login = login;
-window.logout = logout;
-window.abrirModal = abrirModal;
-window.cerrarModal = cerrarModal;
-window.crearPerfume = crearPerfume;
-window.editarPerfume = editarPerfume;
-window.eliminarFirebase = eliminarFirebase;
